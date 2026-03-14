@@ -1,40 +1,123 @@
-"(LIVESTREAMs)*Kenneth Sims Jr. vs Arnold Barboza Jr. Live Top Rank Boxing Free 15 Mar, 2026, (LIVESTREAMs)*Barboza vs Sims Jr Live Boxing Free 15 Mar, 2026, (LIVESTREAMs)*Kenneth Sims Jr. vs Arnold Barboza Jr. Live WBO Free 15 Mar, 2026
+# ─────────────────────────────────────────────────────────────────────
+# Nemotron-3-Nano-30B-A3B  —  FULL PRETRAINING (from scratch)
+# ─────────────────────────────────────────────────────────────────────
+# Data:     ~20B tokens from OptimalScale/ClimbMix
+# Hardware: 1 node × 8 H100 80GB
+# Target:   ~48 hours of training
+#
+# Run:
+#   export CUDA_DEVICE_MAX_CONNECTIONS=1
+#   export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+#
+#   torchrun --nproc_per_node=8 \
+#       examples/llm_pretrain/pretrain.py \
+#       --config /workspace/tejas/configs/nemotron_nano_v3_pretrain.yaml
+#
+# Tokens/step = global_batch_size × seq_length = 64 × 4096 = 262,144
+# At ~80K tok/s throughput → ~0.3 steps/sec → ~26K steps/day
+# 20B tokens / 262K tokens/step ≈ 76K steps total ≈ ~3 days
+# For 48h budget: expect ~52K steps ≈ ~13.6B tokens
+# ─────────────────────────────────────────────────────────────────────
 
-▶▶ CLICK HERE: https://zuzz3.blogspot.com/2026/02/boxing.html
+step_scheduler:
+  global_batch_size: 32
+  local_batch_size: 2          # 1 per GPU; grad accum = GBS / (dp_size * 1) = 8
+  ckpt_every_steps: 1000
+  val_every_steps: 500
+  num_epochs: 1
+  max_steps: 20                    # short run for debugging grad_norm=0
 
-▶▶ CLICK HERE: https://zuzz3.blogspot.com/2026/02/boxing.html
+dist_env:
+  backend: nccl
+  timeout_minutes: 30
 
-Match Details
+rng:
+  _target_: nemo_automodel.components.training.rng.StatefulRNG
+  seed: 194
+  ranked: true
 
-Event: BOXING 2026
+# ── Model: random init from HF config (NOT pretrained weights) ────
+model:
+  _target_: nemo_automodel.NeMoAutoModelForCausalLM.from_config
+  config:
+    _target_: transformers.AutoConfig.from_pretrained
+    pretrained_model_name_or_path: nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16
+    trust_remote_code: true
 
-Match: Barboza vs Sims Jr
+# ── Checkpoint ────────────────────────────────────────────────────
+checkpoint:
+  enabled: true
+  checkpoint_dir: /workspace/chloe/checkpoints/
+  model_save_format: torch_save
 
-Start Time: 4:00 AM
+# ── Distributed: FSDP2, 8 GPUs ───────────────────────────────────
+distributed:
+  strategy: fsdp2
+  dp_size: none
+  tp_size: 1
+  cp_size: 1
+  pp_size: 1
+  ep_size: 8                   # shard 128 experts across 8 GPUs
+  activation_checkpointing: true
 
-Venue: T-Mobile Arena, Las Vegas, Nevada, USA.
+# Uncomment for W&B logging:
+# wandb:
+#   project: nemotron-nano-pretrain
+#   entity: your_entity
+#   name: nano-v3-climbmix-20b
+#   save_dir: /workspace/tejas/wandb/
 
+# ── Loss ──────────────────────────────────────────────────────────
+loss_fn:
+  _target_: nemo_automodel.components.loss.masked_ce.MaskedCrossEntropy
 
-(LIVESTREAMs)*Kenneth Sims Jr. vs Arnold Barboza Jr. Live Top Rank Boxing Free 15 Mar, 2026
+# ── Training data ─────────────────────────────────────────────────
+dataset:
+  _target_: nemo_automodel.components.datasets.llm.megatron_dataset.MegatronPretraining
+  paths: /workspace/tejas/climbmix_megatron/processed_*_text_document*
+  index_mapping_dir: /workspace/tejas/climbmix_megatron/mapping_dir
+  tokenizer:
+    _target_: nemo_automodel._transformers.auto_tokenizer.NeMoAutoTokenizer.from_pretrained
+    pretrained_model_name_or_path: nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16
+    trust_remote_code: true
+  seq_length: 512
+  split: "0.99, 0.01, 0.00"
+  splits_to_build: "train"
 
-(LIVESTREAMs)*Barboza vs Sims Jr Live Boxing Free 15 Mar, 2026
+dataloader:
+  _target_: torchdata.stateful_dataloader.StatefulDataLoader
+  collate_fn: torch.utils.data.default_collate
+  dataloader_type: "single"
 
-(LIVESTREAMs)*WBO Live Kenneth Sims Jr. vs Arnold Barboza Jr. Free 15 Mar, 2026
+# ── Validation data ───────────────────────────────────────────────
+validation_dataset:
+  _target_: nemo_automodel.components.datasets.llm.megatron_dataset.MegatronPretraining
+  paths: /workspace/tejas/climbmix_megatron/processed_*_text_document*
+  index_mapping_dir: /workspace/tejas/climbmix_megatron/mapping_dir
+  tokenizer:
+    _target_: nemo_automodel._transformers.auto_tokenizer.NeMoAutoTokenizer.from_pretrained
+    pretrained_model_name_or_path: nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16
+    trust_remote_code: true
+  seq_length: 4096
+  split: "0.99, 0.01, 0.00"
+  splits_to_build: "validation"
+  num_val_samples: 512
 
-(LIVESTREAMs)*Kenneth Sims Jr. vs Arnold Barboza Jr. Live Top Rank Boxing Free 15 Mar, 2026
+validation_dataloader:
+  _target_: torchdata.stateful_dataloader.StatefulDataLoader
+  collate_fn: torch.utils.data.default_collate
+  dataloader_type: "single"
 
-(LIVESTREAMs)*Barboza vs Sims Jr Live Boxing Free 15 Mar, 2026
+# ── Optimizer (matching original Nemotron-3-Nano hyperparams) ─────
+optimizer:
+  _target_: torch.optim.AdamW
+  betas: [0.9, 0.95]
+  eps: 1.0e-5
+  lr: 1.0e-3                  # original peak LR
+  weight_decay: 0.1
 
-(LIVESTREAMs)*WBO Live Kenneth Sims Jr. vs Arnold Barboza Jr. Free 15 Mar, 2026
-
-(LIVESTREAMs)*Kenneth Sims Jr. vs Arnold Barboza Jr. Live Top Rank Boxing Free 15 Mar, 2026
-
-(LIVESTREAMs)*Barboza vs Sims Jr Live Boxing Free 15 Mar, 2026
-
-(LIVESTREAMs)*WBO Live Kenneth Sims Jr. vs Arnold Barboza Jr. Free 15 Mar, 2026
-
-(LIVESTREAMs)*Kenneth Sims Jr. vs Arnold Barboza Jr. Live Top Rank Boxing Free 15 Mar, 2026
-
-(LIVESTREAMs)*Barboza vs Sims Jr Live Boxing Free 15 Mar, 2026
-
-(LIVESTREAMs)*WBO Live Kenneth Sims Jr. vs Arnold Barboza Jr. Free 15 Mar, 2026"
+# ── LR Schedule ───────────────────────────────────────────────────
+lr_scheduler:
+  lr_decay_style: cosine
+  lr_warmup_steps: 5
+  min_lr: 1.0e-5
