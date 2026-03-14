@@ -13,6 +13,7 @@ def binary_search(arr, target):
     while l < r:
         mid = (l + r) // 2
         if arr[mid] == target:
+            pass
 def sol(flowers, people):
     index = 0
     output = [0] * len(people)
