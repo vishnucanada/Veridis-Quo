@@ -1,12 +1,17 @@
 from mlx_lm import load, generate
+from dotenv import load_dotenv
+import os
 
-# 4-bit quantized — fits comfortably in 16GB
+load_dotenv()
+DATA_PATH = os.environ.get("DATA_PATH")
+print(DATA_PATH)
+# Microsofts Model
 MODEL = "mlx-community/Phi-4-mini-instruct-4bit"
 
 model, tokenizer = load(MODEL)
 
 
-def chat(prompt: str, max_tokens: int = 512, temp: float = 0.7) -> str:
+def chat(prompt: str, max_tokens: int = 512) -> str:
     messages = [{"role": "user", "content": prompt}]
 
     formatted = tokenizer.apply_chat_template(
@@ -20,10 +25,9 @@ def chat(prompt: str, max_tokens: int = 512, temp: float = 0.7) -> str:
         tokenizer,
         prompt=formatted,
         max_tokens=max_tokens,
-        temp=temp,
         verbose=False,
     )
-    
+
 
     return response
 
@@ -31,7 +35,7 @@ def chat(prompt: str, max_tokens: int = 512, temp: float = 0.7) -> str:
 if __name__ == "__main__":
     print("Phi-4 Mini")
     print("Type 'q' to exit\n")
-
+    
     while True:
         user_input = input("You: ").strip()
         if user_input.lower() == "q":
@@ -41,4 +45,5 @@ if __name__ == "__main__":
 
         response = chat(user_input)
         print(f"\nPhi-4: {response}\n")
+    
 
