@@ -32,15 +32,15 @@ def chat(prompt: str, max_tokens: int = 512) -> str:
     return response
 
 def prompt_question(question, answer):
-
+    pass
 if __name__ == "__main__":
     print("Welcome to Veridis Quo\n")
     
     difficulty = "train-easy" # also have train-medium train-hard
     topic = "arithmetic" # can also be reasoning, measurement ect
-    questions_path = os.path.join(DATA_PATH, difficulty, )
-    files = os.listdir(difficulty))
-    with open(problems_path, "r") as myfile:
+    questions_path = os.path.join(DATA_PATH, difficulty, topic)
+    files = os.listdir(difficulty)
+    with open(questions_path, "r") as myfile:
         file_contents = myfile.readlines()
     
     question = file_contents[0]
