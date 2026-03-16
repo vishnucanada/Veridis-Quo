@@ -33,17 +33,26 @@ def chat(prompt: str, max_tokens: int = 512) -> str:
 
 
 if __name__ == "__main__":
-    print("Phi-4 Mini")
-    print("Type 'q' to exit\n")
-    
-    while True:
-        user_input = input("You: ").strip()
-        if user_input.lower() == "q":
-            break
-        if not user_input:
-            continue
+    print("Welcome to Veridis Quo\n")
 
-        response = chat(user_input)
-        print(f"\nPhi-4: {response}\n")
+    problems_path = os.path.join(DATA_PATH, "train-easy/arithmetic__div.txt")
     
+    difficulty = os.path.join(DATA_PATH, "train-easy")
+    print(os.listdir(difficulty))
+    with open(problems_path, "r") as myfile:
+        file_contents = myfile.readlines()
+    
+    question = file_contents[0]
+    answer = file_contents[1]
+
+    
+    
+
+    response = chat(question)
+    print(f"{question}\n")
+    print(f"\nPhi-4: {response}\n")
+    print(f"\nActual Answer {answer}")
+
+    re_prompt = chat(f"Given that the answer is {answer}, would you change your answer?")
+    print(re_prompt)
 
