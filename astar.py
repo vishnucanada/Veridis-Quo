@@ -1,179 +1,164 @@
 """
-Alpha-Beta Pruning on a Tic-Tac-Toe game tree.
+Alpha-Beta Pruning on a Tic-Tac-Toe game tree — OOP design.
 
-Alpha-beta pruning is an optimization of minimax search. It cuts off branches
-that cannot possibly affect the final decision, reducing nodes evaluated from
-O(b^d) to O(b^(d/2)) in the best case.
-
-  - Maximizer (X) tries to maximize the score
-  - Minimizer (O) tries to minimize the score
-  - Alpha: best score the maximizer is guaranteed so far
-  - Beta:  best score the minimizer is guaranteed so far
-  - Prune when alpha >= beta — the opponent will never allow this branch
+Classes:
+  - Board: holds game state, renders, and checks win/draw conditions
+  - AlphaBeta: search engine that operates on a Board
+  - Game: orchestrates players and the game loop
 """
 
 from __future__ import annotations
 
-X = "X"
-O = "O"
-EMPTY = "."
 
-Board = list[str]  # 9 cells, row-major
+# ---------------------------------------------------------------------------
+# Board
+# ---------------------------------------------------------------------------
+
+class Board:
+    X = "X"
+    O = "O"
+    EMPTY = "."
+
+    LINES = [
+        (0, 1, 2), (3, 4, 5), (6, 7, 8),  # rows
+        (0, 3, 6), (1, 4, 7), (2, 5, 8),  # cols
+        (0, 4, 8), (2, 4, 6),             # diagonals
+    ]
+
+    def __init__(self, cells: list[str] | None = None):
+        self.cells = cells[:] if cells else [self.EMPTY] * 9
+
+    def copy(self) -> Board:
+        return Board(self.cells)
+
+    def place(self, index: int, player: str) -> None:
+        self.cells[index] = player
+
+    def undo(self, index: int) -> None:
+        self.cells[index] = self.EMPTY
+
+    def available_moves(self) -> list[int]:
+        return [i for i, c in enumerate(self.cells) if c == self.EMPTY]
+
+    def winner(self) -> str | None:
+        for a, b, c in self.LINES:
+            if self.cells[a] == self.cells[b] == self.cells[c] != self.EMPTY:
+                return self.cells[a]
+        return None
+
+    def is_terminal(self) -> bool:
+        return self.winner() is not None or not self.available_moves()
+
+    def evaluate(self) -> int:
+        w = self.winner()
+        if w == self.X:
+            return 1
+        if w == self.O:
+            return -1
+        return 0
+
+    def __str__(self) -> str:
+        rows = [" | ".join(self.cells[i:i+3]) for i in range(0, 9, 3)]
+        return "\n---------\n".join(rows)
 
 
 # ---------------------------------------------------------------------------
-# Board helpers
+# AlphaBeta search engine
 # ---------------------------------------------------------------------------
 
-def make_board() -> Board:
-    return [EMPTY] * 9
+class AlphaBeta:
+    def __init__(self):
+        self.nodes_evaluated = 0
 
+    def search(self, board: Board, is_maximizing: bool) -> int:
+        """Return the best move index for the current player."""
+        self.nodes_evaluated = 0
+        best_score = -float("inf") if is_maximizing else float("inf")
+        best_move = -1
+        player = Board.X if is_maximizing else Board.O
 
-def display(board: Board) -> str:
-    rows = [" | ".join(board[i:i+3]) for i in range(0, 9, 3)]
-    return "\n---------\n".join(rows)
+        for move in board.available_moves():
+            board.place(move, player)
+            score = self._alphabeta(board, -float("inf"), float("inf"), not is_maximizing)
+            board.undo(move)
 
+            if is_maximizing and score > best_score:
+                best_score, best_move = score, move
+            elif not is_maximizing and score < best_score:
+                best_score, best_move = score, move
 
-def moves(board: Board) -> list[int]:
-    return [i for i, c in enumerate(board) if c == EMPTY]
+        return best_move
 
+    def _alphabeta(self, board: Board, alpha: float, beta: float, is_maximizing: bool) -> int:
+        self.nodes_evaluated += 1
 
-LINES = [
-    (0, 1, 2), (3, 4, 5), (6, 7, 8),  # rows
-    (0, 3, 6), (1, 4, 7), (2, 5, 8),  # cols
-    (0, 4, 8), (2, 4, 6),             # diagonals
-]
+        if board.is_terminal():
+            return board.evaluate()
 
-
-def winner(board: Board) -> str | None:
-    for a, b, c in LINES:
-        if board[a] == board[b] == board[c] != EMPTY:
-            return board[a]
-    return None
-
-
-def terminal(board: Board) -> bool:
-    return winner(board) is not None or not moves(board)
-
-
-def evaluate(board: Board) -> int:
-    w = winner(board)
-    if w == X:
-        return 1
-    if w == O:
-        return -1
-    return 0
-
-
-# ---------------------------------------------------------------------------
-# Alpha-Beta Pruning
-# ---------------------------------------------------------------------------
-
-nodes_evaluated = 0  # global counter to demonstrate pruning
-
-
-def alphabeta(
-    board: Board,
-    depth: int,
-    alpha: float,
-    beta: float,
-    is_maximizing: bool,
-) -> int:
-    global nodes_evaluated
-    nodes_evaluated += 1
-
-    if terminal(board):
-        return evaluate(board)
-
-    if is_maximizing:
-        best = -float("inf")
-        for move in moves(board):
-            board[move] = X
-            score = alphabeta(board, depth + 1, alpha, beta, False)
-            board[move] = EMPTY
-
-            best = max(best, score)
-            alpha = max(alpha, best)
-
-            if alpha >= beta:
-                break  # beta cutoff — minimizer won't allow this branch
-
-        return best
-
-    else:
-        best = float("inf")
-        for move in moves(board):
-            board[move] = O
-            score = alphabeta(board, depth + 1, alpha, beta, True)
-            board[move] = EMPTY
-
-            best = min(best, score)
-            beta = min(beta, best)
-
-            if alpha >= beta:
-                break  # alpha cutoff — maximizer won't allow this branch
-
-        return best
-
-
-def best_move(board: Board, is_maximizing: bool) -> int:
-    """Return the index of the optimal move for the current player."""
-    global nodes_evaluated
-    nodes_evaluated = 0
-
-    best_score = -float("inf") if is_maximizing else float("inf")
-    chosen = -1
-    player = X if is_maximizing else O
-
-    for move in moves(board):
-        board[move] = player
-        score = alphabeta(board, 0, -float("inf"), float("inf"), not is_maximizing)
-        board[move] = EMPTY
-
-        if is_maximizing and score > best_score:
-            best_score = score
-            chosen = move
-        elif not is_maximizing and score < best_score:
-            best_score = score
-            chosen = move
-
-    return chosen
+        if is_maximizing:
+            best = -float("inf")
+            for move in board.available_moves():
+                board.place(move, Board.X)
+                best = max(best, self._alphabeta(board, alpha, beta, False))
+                board.undo(move)
+                alpha = max(alpha, best)
+                if alpha >= beta:
+                    break  # beta cutoff
+            return best
+        else:
+            best = float("inf")
+            for move in board.available_moves():
+                board.place(move, Board.O)
+                best = min(best, self._alphabeta(board, alpha, beta, True))
+                board.undo(move)
+                beta = min(beta, best)
+                if alpha >= beta:
+                    break  # alpha cutoff
+            return best
 
 
 # ---------------------------------------------------------------------------
-# Sample: X vs O, both playing optimally
+# Game
+# ---------------------------------------------------------------------------
+
+class Game:
+    def __init__(self, board: Board | None = None):
+        self.board = board or Board()
+        self.engine = AlphaBeta()
+        self.turn = Board.X
+        self.move_num = 1
+
+    def play(self) -> None:
+        print("Starting position:")
+        print(self.board)
+        print()
+
+        while not self.board.is_terminal():
+            is_max = (self.turn == Board.X)
+            move = self.engine.search(self.board, is_max)
+            self.board.place(move, self.turn)
+
+            row, col = divmod(move, 3)
+            print(f"Move {self.move_num} — {self.turn} plays ({row},{col}), nodes evaluated: {self.engine.nodes_evaluated}")
+            print(self.board)
+            print()
+
+            self.turn = Board.O if self.turn == Board.X else Board.X
+            self.move_num += 1
+
+        w = self.board.winner()
+        print(f"Winner: {w}" if w else "Draw — both played optimally")
+
+
+# ---------------------------------------------------------------------------
+# Sample run
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    board = make_board()
+    # Pre-set a mid-game position: X has center, O has top-left
+    board = Board()
+    board.place(4, Board.X)
+    board.place(0, Board.O)
 
-    # Pre-set a mid-game position to make it interesting
-    # X has center, O has top-left
-    board[4] = X
-    board[0] = O
-
-    print("Starting position:")
-    print(display(board))
-    print()
-
-    turn = X  # X moves next (maximizing)
-    move_num = 1
-
-    while not terminal(board):
-        is_max = (turn == X)
-        move = best_move(board, is_max)
-        board[move] = turn
-
-        row, col = divmod(move, 3)
-        print(f"Move {move_num} — {turn} plays ({row},{col}), nodes evaluated: {nodes_evaluated}")
-        print(display(board))
-        print()
-
-        turn = O if turn == X else X
-        move_num += 1
-
-    w = winner(board)
-    if w:
-        print(f"Winner: {w}")
-    else:
-        print("Draw — both played optimally")
+    game = Game(board)
+    game.play()
