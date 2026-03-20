@@ -1,158 +1,179 @@
 """
-A* pathfinding on a 2D grid.
+Alpha-Beta Pruning on a Tic-Tac-Toe game tree.
 
-A* finds the shortest path between two points by combining:
-  - g(n): actual cost from start to node n
-  - h(n): heuristic estimate from n to goal (Manhattan distance)
-  - f(n) = g(n) + h(n): priority used to explore nodes
+Alpha-beta pruning is an optimization of minimax search. It cuts off branches
+that cannot possibly affect the final decision, reducing nodes evaluated from
+O(b^d) to O(b^(d/2)) in the best case.
 
-Nodes with the lowest f(n) are explored first via a min-heap.
+  - Maximizer (X) tries to maximize the score
+  - Minimizer (O) tries to minimize the score
+  - Alpha: best score the maximizer is guaranteed so far
+  - Beta:  best score the minimizer is guaranteed so far
+  - Prune when alpha >= beta — the opponent will never allow this branch
 """
 
-import heapq
-from typing import NamedTuple
+from __future__ import annotations
+
+X = "X"
+O = "O"
+EMPTY = "."
+
+Board = list[str]  # 9 cells, row-major
 
 
 # ---------------------------------------------------------------------------
-# Types
+# Board helpers
 # ---------------------------------------------------------------------------
 
-class Point(NamedTuple):
-    row: int
-    col: int
+def make_board() -> Board:
+    return [EMPTY] * 9
 
 
-WALL = "#"
-OPEN = "."
-START = "S"
-GOAL = "G"
-PATH = "*"
+def display(board: Board) -> str:
+    rows = [" | ".join(board[i:i+3]) for i in range(0, 9, 3)]
+    return "\n---------\n".join(rows)
 
-MOVES = [
-    Point(-1,  0),  # up
-    Point( 1,  0),  # down
-    Point( 0, -1),  # left
-    Point( 0,  1),  # right
+
+def moves(board: Board) -> list[int]:
+    return [i for i, c in enumerate(board) if c == EMPTY]
+
+
+LINES = [
+    (0, 1, 2), (3, 4, 5), (6, 7, 8),  # rows
+    (0, 3, 6), (1, 4, 7), (2, 5, 8),  # cols
+    (0, 4, 8), (2, 4, 6),             # diagonals
 ]
 
 
-# ---------------------------------------------------------------------------
-# Heuristic
-# ---------------------------------------------------------------------------
-
-def manhattan(a: Point, b: Point) -> int:
-    return abs(a.row - b.row) + abs(a.col - b.col)
-
-
-# ---------------------------------------------------------------------------
-# A* search
-# ---------------------------------------------------------------------------
-
-def astar(grid: list[list[str]], start: Point, goal: Point) -> list[Point] | None:
-    """
-    Returns the shortest path from start to goal as a list of Points,
-    or None if no path exists.
-    """
-    rows, cols = len(grid), len(grid[0])
-
-    # min-heap entries: (f, g, point)
-    heap: list[tuple[int, int, Point]] = []
-    heapq.heappush(heap, (0, 0, start))
-
-    came_from: dict[Point, Point | None] = {start: None}
-    g_score: dict[Point, int] = {start: 0}
-
-    while heap:
-        _, g, current = heapq.heappop(heap)
-
-        if current == goal:
-            return _reconstruct(came_from, current)
-
-        # skip if we already found a better path to this node
-        if g > g_score.get(current, float("inf")):
-            continue
-
-        for move in MOVES:
-            neighbor = Point(current.row + move.row, current.col + move.col)
-
-            if not (0 <= neighbor.row < rows and 0 <= neighbor.col < cols):
-                continue
-            if grid[neighbor.row][neighbor.col] == WALL:
-                continue
-
-            tentative_g = g + 1  # uniform step cost
-
-            if tentative_g < g_score.get(neighbor, float("inf")):
-                g_score[neighbor] = tentative_g
-                f = tentative_g + manhattan(neighbor, goal)
-                heapq.heappush(heap, (f, tentative_g, neighbor))
-                came_from[neighbor] = current
-
-    return None  # no path found
+def winner(board: Board) -> str | None:
+    for a, b, c in LINES:
+        if board[a] == board[b] == board[c] != EMPTY:
+            return board[a]
+    return None
 
 
-def _reconstruct(came_from: dict[Point, Point | None], current: Point) -> list[Point]:
-    path = []
-    while current is not None:
-        path.append(current)
-        current = came_from[current]
-    path.reverse()
-    return path
+def terminal(board: Board) -> bool:
+    return winner(board) is not None or not moves(board)
+
+
+def evaluate(board: Board) -> int:
+    w = winner(board)
+    if w == X:
+        return 1
+    if w == O:
+        return -1
+    return 0
 
 
 # ---------------------------------------------------------------------------
-# Grid helpers
+# Alpha-Beta Pruning
 # ---------------------------------------------------------------------------
 
-def parse_grid(text: str) -> tuple[list[list[str]], Point, Point]:
-    grid = [list(row) for row in text.strip().splitlines()]
-    start = goal = None
-    for r, row in enumerate(grid):
-        for c, cell in enumerate(row):
-            if cell == START:
-                start = Point(r, c)
-            elif cell == GOAL:
-                goal = Point(r, c)
-    assert start and goal, "Grid must contain S (start) and G (goal)"
-    return grid, start, goal
+nodes_evaluated = 0  # global counter to demonstrate pruning
 
 
-def render(grid: list[list[str]], path: list[Point] | None) -> str:
-    display = [row[:] for row in grid]
-    if path:
-        for p in path:
-            if display[p.row][p.col] not in (START, GOAL):
-                display[p.row][p.col] = PATH
-    return "\n".join("".join(row) for row in display)
+def alphabeta(
+    board: Board,
+    depth: int,
+    alpha: float,
+    beta: float,
+    is_maximizing: bool,
+) -> int:
+    global nodes_evaluated
+    nodes_evaluated += 1
+
+    if terminal(board):
+        return evaluate(board)
+
+    if is_maximizing:
+        best = -float("inf")
+        for move in moves(board):
+            board[move] = X
+            score = alphabeta(board, depth + 1, alpha, beta, False)
+            board[move] = EMPTY
+
+            best = max(best, score)
+            alpha = max(alpha, best)
+
+            if alpha >= beta:
+                break  # beta cutoff — minimizer won't allow this branch
+
+        return best
+
+    else:
+        best = float("inf")
+        for move in moves(board):
+            board[move] = O
+            score = alphabeta(board, depth + 1, alpha, beta, True)
+            board[move] = EMPTY
+
+            best = min(best, score)
+            beta = min(beta, best)
+
+            if alpha >= beta:
+                break  # alpha cutoff — maximizer won't allow this branch
+
+        return best
+
+
+def best_move(board: Board, is_maximizing: bool) -> int:
+    """Return the index of the optimal move for the current player."""
+    global nodes_evaluated
+    nodes_evaluated = 0
+
+    best_score = -float("inf") if is_maximizing else float("inf")
+    chosen = -1
+    player = X if is_maximizing else O
+
+    for move in moves(board):
+        board[move] = player
+        score = alphabeta(board, 0, -float("inf"), float("inf"), not is_maximizing)
+        board[move] = EMPTY
+
+        if is_maximizing and score > best_score:
+            best_score = score
+            chosen = move
+        elif not is_maximizing and score < best_score:
+            best_score = score
+            chosen = move
+
+    return chosen
 
 
 # ---------------------------------------------------------------------------
-# Sample run
+# Sample: X vs O, both playing optimally
 # ---------------------------------------------------------------------------
-
-SAMPLE_GRID = """
-S . . . # . . .
-. # # . # . # .
-. # . . . . # .
-. . . # # . . .
-# # . . . # . .
-. . . # . . . G
-"""
 
 if __name__ == "__main__":
-    grid, start, goal = parse_grid(SAMPLE_GRID)
+    board = make_board()
 
-    print("Grid:")
-    print(render(grid, None))
-    print(f"\nStart: {start}  Goal: {goal}")
-    print("\nSearching...\n")
+    # Pre-set a mid-game position to make it interesting
+    # X has center, O has top-left
+    board[4] = X
+    board[0] = O
 
-    path = astar(grid, start, goal)
+    print("Starting position:")
+    print(display(board))
+    print()
 
-    if path is None:
-        print("No path found.")
+    turn = X  # X moves next (maximizing)
+    move_num = 1
+
+    while not terminal(board):
+        is_max = (turn == X)
+        move = best_move(board, is_max)
+        board[move] = turn
+
+        row, col = divmod(move, 3)
+        print(f"Move {move_num} — {turn} plays ({row},{col}), nodes evaluated: {nodes_evaluated}")
+        print(display(board))
+        print()
+
+        turn = O if turn == X else X
+        move_num += 1
+
+    w = winner(board)
+    if w:
+        print(f"Winner: {w}")
     else:
-        print("Path found:")
-        print(render(grid, path))
-        print(f"\nPath length : {len(path) - 1} steps")
-        print(f"Nodes in path: {path}")
+        print("Draw — both played optimally")
